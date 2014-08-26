@@ -104,8 +104,9 @@ void CSocketIOpp::on_open(websocketpp::connection_hdl hdl)
 void CSocketIOpp::on_message(websocketpp::connection_hdl hdl, message_ptr msg)
 {
 	string payload = msg->get_payload();
+	string eio = payload.substr(0, 1);
 	//todo: add PING/PONG accordingly. A timer is necessary.
-	if(payload.substr(0, 1) == eioType["MESSAGE"])
+	if(eio == eioType["MESSAGE"])
 	{
 		string sio = payload.substr(1, 1);
 		if(sio == sioType["CONNECT"])
@@ -114,9 +115,15 @@ void CSocketIOpp::on_message(websocketpp::connection_hdl hdl, message_ptr msg)
 								"[\"subscribe\",[\"marketdata_cnybtc\",\"marketdata_cnyltc\",\"marketdata_btcltc\"]]",
 								websocketpp::frame::opcode::text);
 		else if (sio == sioType["EVENT"])
+		{
 			if(payload.substr(4, 5) == "trade")//listen on "trade"
 				cout << payload.substr(payload.find_first_of('{'), payload.find_last_of('}') - payload.find_first_of('{') + 1) << endl;
 		}
+	}
+	else if(eio == eioType["PING"])
+	{
+		m_socketio.send(hdl, eioType["PONG"] + payload.substr(1, payload.length() - 1), websocketpp::frame::opcode::text);
+	}
 }
 
 void CSocketIOpp::on_socket_init(websocketpp::connection_hdl hdl)
